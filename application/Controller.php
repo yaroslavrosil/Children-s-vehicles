@@ -14,6 +14,8 @@ class Controller extends \common\Controller
     /**
      * @return Template|null
      */
+    protected $url = 'http://crm.internatzba.com.ua/service/v4_1/rest.php';
+
     public function getView()
     {
         $this->view = new Template();
@@ -22,61 +24,175 @@ class Controller extends \common\Controller
     }
 
 
-    public function getContent($url){
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        $data = curl_exec($ch);
-        curl_close($ch);
-        if (isset($data)) {
-            return $data;
-        } else {throw new Exception('No connection with Shopify API');}
+    public function restRequest($method, $arguments){
+        $curl = curl_init($this->url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        $post = array(
+            "method" => $method,
+            "input_type" => "JSON",
+            "response_type" => "JSON",
+            "rest_data" => json_encode($arguments),
+        );
+
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $post);
+
+        $result = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($result,1);
+    }
+
+    public function getAuth(){
+        $userAuth = array(
+            'user_name' => 'admin',
+            'password' => md5('Test!123'),
+        );
+        $appName = 'My SuiteCRM REST Client';
+        $nameValueList = array();
+
+        $args = array(
+            'user_auth' => $userAuth,
+            'application_name' => $appName,
+            'name_value_list' => $nameValueList);
+
+        $result = $this->restRequest('login', $args);
+        return $result['id'];
     }
 
 
-    /**
-     * @param $array
-     * @return mixed
-     */
-    public function prepareDataProducts($array) {
-        $data = array();
-        $i = 0;
-        while (isset($array['product_listings'][$i]['product_id'])) {
-            $data[$i]['product_id'] = $array['product_listings'][$i]['product_id'];
-            $data[$i]['title'] = $array['product_listings'][$i]['title'];
-            $data[$i]['description'] = $array['product_listings'][$i]['body_html'];
-            $data[$i]['photo'] = $array['product_listings'][$i]['images'][0]['src'];
-            $data[$i]['price'] = $array['product_listings'][$i]['variants'][0]['price'];
-            $data[$i]['weight'] = $array['product_listings'][$i]['variants'][0]['weight'];
-            $i++;
-        }
-        return $data;
+    public function getAccounts()
+    {
+        $sessId = $this->getAuth();
+        $entryArgs = array(
+            //Session id - retrieved from login call
+            'session' => $sessId,
+            //Module to get_entry_list for
+            'module_name' => 'Accounts',
+            //Filter query - Added to the SQL where clause,
+            'query' => "",
+            //Order by - unused
+            'order_by' => '',
+            //Start with the first record
+            'offset' => 0,
+            //Return the id and name fields
+            'select_fields' => array(),
+            //Show 30 max results
+            'max_results' => 30,
+            //Do not show deleted
+            'deleted' => 0,
+        );
+        $result = $this->restRequest('get_entry_list', $entryArgs);
+        return $result;
     }
 
-
-    public function prepareDataCollections($array) {
-        $data = array();
-        $i = 0;
-        while (isset($array['collection_listings'][$i]['collection_id'])){
-            $data[$i]['collection_id'] = $array['collection_listings'][$i]['collection_id'];
-            $data[$i]['title'] = $array['collection_listings'][$i]['title'];
-            $data[$i]['image'] = $array['collection_listings'][$i]['default_product_image']['src'];
-            $i++;
-        }
-        return $data;
+    public function getContacts()
+    {
+        $sessId = $this->getAuth();
+        $entryArgs = array(
+            //Session id - retrieved from login call
+            'session' => $sessId,
+            //Module to get_entry_list for
+            'module_name' => 'Contacts',
+            //Filter query - Added to the SQL where clause,
+            'query' => "",
+            //Order by - unused
+            'order_by' => '',
+            //Start with the first record
+            'offset' => 0,
+            //Return the id and name fields
+            'select_fields' => array(),
+            //Show 30 max results
+            'max_results' => 30,
+            //Do not show deleted
+            'deleted' => 0,
+        );
+        $result = $this->restRequest('get_entry_list', $entryArgs);
+        return $result;
+    }
+    public function getLeads()
+    {
+        $sessId = $this->getAuth();
+        $entryArgs = array(
+            //Session id - retrieved from login call
+            'session' => $sessId,
+            //Module to get_entry_list for
+            'module_name' => 'Leads',
+            //Filter query - Added to the SQL where clause,
+            'query' => "",
+            //Order by - unused
+            'order_by' => '',
+            //Start with the first record
+            'offset' => 0,
+            //Return the id and name fields
+            'select_fields' => array(),
+            //Show 30 max results
+            'max_results' => 30,
+            //Do not show deleted
+            'deleted' => 0,
+        );
+        $result = $this->restRequest('get_entry_list', $entryArgs);
+        return $result;
     }
 
+    public function getOpportunities()
+    {
+        $sessId = $this->getAuth();
+        $entryArgs = array(
+            //Session id - retrieved from login call
+            'session' => $sessId,
+            //Module to get_entry_list for
+            'module_name' => 'Opportunities',
+            //Filter query - Added to the SQL where clause,
+            'query' => "",
+            //Order by - unused
+            'order_by' => '',
+            //Start with the first record
+            'offset' => 0,
+            //Return the id and name fields
+            'select_fields' => array(),
+            //Show 30 max results
+            'max_results' => 30,
+            //Do not show deleted
+            'deleted' => 0,
+        );
+        $result = $this->restRequest('get_entry_list', $entryArgs);
+        return $result;
+    }
 
-    public function prepareDataAppliance($array) {
-        $data = array();
-        $i = 0;
-        while (isset($array['collects'][$i]['product_id'])){
-            $data[$i]['collection_id'] = $array['collects'][$i]['collection_id'];
-            $data[$i]['product_id'] = $array['collects'][$i]['product_id'];
-            $i++;
-        }
-        return $data;
+    public function getTasks()
+    {
+        $sessId = $this->getAuth();
+        $entryArgs = array(
+            //Session id - retrieved from login call
+            'session' => $sessId,
+            //Module to get_entry_list for
+            'module_name' => 'Tasks',
+            //Filter query - Added to the SQL where clause,
+            'query' => "",
+            //Order by - unused
+            'order_by' => '',
+            //Start with the first record
+            'offset' => 0,
+            //Return the id and name fields
+            'select_fields' => array(),
+            //Show 30 max results
+            'max_results' => 30,
+            //Do not show deleted
+            'deleted' => 0,
+        );
+        $result = $this->restRequest('get_entry_list', $entryArgs);
+        return $result;
+    }
+
+    public function getModules()
+    {
+        $sessId = $this->getAuth();
+        $entryArgs = array(
+            //Session id - retrieved from login call
+            'session' => $sessId,
+            //Filter
+            'filter' => 'default',
+        );
+        $result = $this->restRequest('get_available_modules', $entryArgs);
+        return $result;
     }
 }
